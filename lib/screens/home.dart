@@ -5,6 +5,7 @@ import 'package:mis_lab2/widgets/random_button.dart';
 import '../services/api_service.dart';
 import '../models/category_model.dart';
 import '../widgets/category_card.dart';
+import '../widgets/random_recipe_navigator.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -16,14 +17,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   List<Category> _categories = [];
   List<Category> _filtered = [];
-
   bool _isLoading = true;
 
   final ApiService _apiService = ApiService();
   final TextEditingController _searchController = TextEditingController();
+
+
 
   @override
   void initState() {
@@ -43,27 +44,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _filter(String query) {
     final q = query.toLowerCase();
-
-    final filtered = _categories.where((c) {
-      return c.name.toLowerCase().contains(q);
-    }).toList();
-
     setState(() {
-      _filtered = filtered;
+      _filtered = _categories.where((c) =>
+          c.name.toLowerCase().contains(q)).toList();
     });
   }
 
-  void _openRandomRecipe() async {
-    final recipe = await _apiService.loadRandomRecipe();
-    if (recipe == null) return;
-
-    if (!mounted) return;
-
-    Navigator.pushNamed(
-      context,
-      "/recipe",
-      arguments: recipe.id.toString(),
-    );
+  void _openRandomRecipe() {
+    RandomRecipeNavigator.openRandomRecipe(context);
   }
 
 
@@ -82,10 +70,13 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: CategorySearchBar(controller: _searchController, onChanged: _filter)
+            child: CategorySearchBar(
+              controller: _searchController,
+              onChanged: _filter,
+            ),
           ),
           Expanded(
-            child: CategoryList(categories: _filtered)
+            child: CategoryList(categories: _filtered),
           ),
         ],
       ),

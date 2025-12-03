@@ -9,6 +9,8 @@ import '../models/recipe_model.dart';
 class ApiService {
   final baseUrl = "https://www.themealdb.com/api/json/v1/1";
 
+  static Map<String, List<Meal>> cachedMealsByCategory = {};
+
   Future<List<Category>> loadCategories() async {
     final response = await http.get(
       Uri.parse("$baseUrl/categories.php"),
@@ -49,18 +51,22 @@ class ApiService {
   }
 
   Future<List<Meal>> loadMealsByCategory(String category) async {
-    final response = await http.get(
-      Uri.parse("$baseUrl/filter.php?c=$category"),
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List list = data["meals"];
-      return list.map((m) => Meal.fromJson(m)).toList();
+    if (cachedMealsByCategory.containsKey(category)) {
+      return cachedMealsByCategory[category]!;
     }
 
-    return [];
+    final url = Uri.parse('https://www.themealdb.com/api/json/v1/1/filter.php?c=$category');
+    final response = await http.get(url);
+
+    final data = json.decode(response.body);
+    final meals = (data["meals"] as List)
+        .map((m) => Meal.fromJson(m))
+        .toList();
+
+    cachedMealsByCategory[category] = meals;
+    return meals;
   }
+
 
   Future<List<Meal>> searchMeals(String query) async {
     final response = await http.get(

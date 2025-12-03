@@ -5,6 +5,7 @@ import '../models/meal_model.dart';
 import '../services/api_service.dart';
 import '../widgets/meal_card.dart';
 import '../widgets/meal_grid.dart';
+import 'favorites.dart';
 
 class MealsScreen extends StatefulWidget {
   const MealsScreen({super.key});
@@ -26,12 +27,18 @@ class _MealsScreenState extends State<MealsScreen> {
 
   late String categoryName;
 
+  bool _initialized = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    categoryName = ModalRoute.of(context)!.settings.arguments as String;
-    _loadMeals();
+    if (!_initialized) {
+      categoryName = ModalRoute.of(context)!.settings.arguments as String;
+      _loadMeals();
+      _initialized = true;
+    }
   }
+
 
   void _loadMeals() async {
     final result = await _api.loadMealsByCategory(categoryName);
@@ -42,6 +49,7 @@ class _MealsScreenState extends State<MealsScreen> {
       _loading = false;
     });
   }
+
 
   void _filterMeals(String query) {
     final q = query.toLowerCase();
@@ -73,6 +81,16 @@ class _MealsScreenState extends State<MealsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(categoryName),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.star),
+            onPressed: () async {
+              await Navigator.pushNamed(context, "/favorites");
+              setState(() {});
+            },
+          )
+        ],
+
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -89,7 +107,10 @@ class _MealsScreenState extends State<MealsScreen> {
               onPressed: () => _searchMealsApi(_search.text),
             ),
           Expanded(
-            child: MealGrid(meals: _filtered)
+            child:
+            MealGrid(
+              meals: _filtered,
+              onRefresh: () => setState(() {}),)
           ),
         ],
       ),
